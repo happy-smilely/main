@@ -16,9 +16,12 @@ public class MemberVo {
 
     private String name;
 
+    private String remark;
+
     @Builder
-    public MemberVo(String id, String name) {
+    public MemberVo(String id, String name, String remark) {
         this.id = id;
         this.name = name;
+        this.remark = remark;
     }
 }
