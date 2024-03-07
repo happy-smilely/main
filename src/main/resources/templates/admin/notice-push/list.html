@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout/layout}">
+<head>
+    <title>공지 알림</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>공지 알림</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item">알림 관리</li>
+              <li class="breadcrumb-item active">공지 알림</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">알림 전송</h3>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <div class="form-group">
+                      <label>제목</label>
+                      <input type="text" class="form-control" placeholder="제목" id="title" maxlength="200">
+                    </div>
+                  </div>
+                  <div class="col-sm-12">
+                    <div class="form-group">
+                      <label>내용</label>
+                      <textarea class="form-control" rows="5" placeholder="내용" id="body" onkeyup="fnChkByte(this, '1000')"></textarea>
+                    </div>
+                  </div>
+                  <div class="col-sm-12" style="text-align: right;">
+                    <span id="curByte"></span> byte / 1000 byte<br>
+                    (한글500자/영어1000자 이내)
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <button type="button" onclick="postNoticePush()" class="btn btn-primary">전송</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <form id="searchForm">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card card-success">
+                <div class="card-header">
+                  <h3 class="card-title">검색</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <div class="form-group">
+                        <label>발송일</label>
+                          <div class="input-group date" id="schCreatedAtInput" data-target-input="nearest">
+                              <input type="text" class="form-control datetimepicker-input" data-target="#schCreatedAtInput" name="schCreatedAt" placeholder="YYYY-MM-DD" th:value="${search.schCreatedAt}"/>
+                              <div class="input-group-append" data-target="#schCreatedAtInput" data-toggle="datetimepicker">
+                                  <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-3">
+                      <div class="form-group">
+                        <label>제목</label>
+                        <input type="text" class="form-control" name="schTitle" th:value="${search.schTitle}">
+                      </div>
+                    </div>
+                    <div class="col-sm-3">
+                      <div class="form-group">
+                        <label>내용</label>
+                        <input type="text" class="form-control" name="schBody" th:value="${search.schBody}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-success">검색</button>
+                  <button type="button" onclick="clearCond()" class="btn btn-secondary">검색조건 초기화</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          </form>
+
+        <div class="row">
+          <div class="col-md-12">
+            
+            <div class="card card-secondary">
+              <div class="card-header">
+                <h3 class="card-title">알림 전송 내역</h3>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-striped" id="mainTable">
+                  <thead>
+                    <tr>
+                      <th>발송일</th>
+                      <th>제목</th>
+                      <th>내용</th>
+                      <th>발송 대상 수</th>
+                      <th>발송 성공 수</th>
+                      <th>발송 실패 수</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <th:block th:if="${pushPage.totalElements != 0}" th:each="push : ${pushPage}">
+                      <tr>
+                        <td th:text="${#temporals.format(push.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        <td th:text="${push.title}"></td>
+                        <td th:text="${push.body}"></td>
+                        <td th:text="${push.targetCnt}"></td>
+                        <td th:text="${push.successCnt}"></td>
+                        <td th:text="${push.failCnt}"></td>
+                      </tr>
+                    </th:block>
+                  </tbody>
+                  </tbody>
+                </table>
+              </div>
+              
+              <th:block th:if="${pushPage.totalElements != 0}">
+                <div class="card-footer clearfix"
+                  th:with="maxPage=10,
+                    size=${pushPage.size},
+                    start=${(pushPage.number/maxPage)*maxPage + 1},
+                    end=(${(pushPage.totalPages == 0) ? 1 : (start + (maxPage - 1) < pushPage.totalPages ? start + (maxPage - 1) : pushPage.totalPages)}),
+                    queryString=${search.makeQueryString()}">
+                  <ul class="pagination pagination-sm m-0 float-right">
+                    <li class="page-item"><a class="page-link" th:if="${start > 1}" th:href="@{/admin/notice-push(size=${size}, page=0)} + ${queryString}">&laquo;&laquo;</a></li>
+                    <li class="page-item"><a class="page-link" th:if="${start > 1}" th:href="@{/admin/notice-push(size=${size}, page=${start - maxPage -1})} + ${queryString}">&laquo;</a></li>
+                    <li class="page-item" th:each="page: ${#numbers.sequence(start, end)}"><a class="page-link" th:href="@{/admin/notice-push(size=${size}, page=${page-1})} + ${queryString}" th:text="${page}" th:style="${page == pushPage.number+1 ? 'font-weight:bold' : ''}"></a></li>
+                    <li class="page-item"><a class="page-link" th:if="${end < pushPage.totalPages}" th:href="@{/admin/notice-push(size=${size}, page=${start + maxPage -1})} + ${queryString}">&raquo;</a></li>
+                    <li class="page-item"><a class="page-link" th:if="${end < pushPage.totalPages}" th:href="@{/admin/notice-push(size=${size}, page=${pushPage.totalPages-1})} + ${queryString}">&raquo;&raquo;</a></li>
+                  </ul>
+                </div>
+              </th:block>
+
+              
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+</th:block>
+
+<th:block layout:fragment="script">
+  <script type="text/javascript" th:inline="javascript">
+
+    $(function() {
+      $('#schCreatedAtInput').datetimepicker({
+        format: 'YYYY-MM-DD'
+      });
+    })
+
+    function chkValidation() {
+      var validationObj = {}
+      var title = $("#title").val().trim();
+      var body = $("#body").val().trim();
+
+      if(title == "") {
+        alert("제목을 입력해주세요.");
+        validationObj.result = false;
+        return validationObj;
+      }
+
+      if(body == "") {
+        alert("내용을 입력해주세요.");
+        validationObj.result = false;
+        return validationObj;
+      }
+
+      validationObj.title = title;
+      validationObj.body = body;
+      validationObj.result = true;
+      return validationObj;
+    }
+
+
+    function postNoticePush() {
+
+      var validationObj = chkValidation();
+      if(validationObj.result == false) {
+        return false;
+      }
+      
+      if(confirm("*** 주의!! 인증된 사용자 전체에게 알림을 발송하시겠습니까? ***")) {
+        $.ajax({
+          url: "/admin/notice-push",
+          method: "POST",
+          data: { 
+            title: validationObj.title,
+            body: validationObj.body
+          },
+          success: function (data) {
+            alert("알림을 발송하였습니다.");
+            location.href = "/admin/notice-push";
+          },
+          error: function(xhr, status, error) {
+            let response = JSON.parse(xhr.responseText);
+            if(response) {
+              alert(response.msg);
+            }else {
+              alert("API 호출 실패");
+            }
+          }
+        });
+      }
+
+    }
+
+    function clearCond() {
+      $("#searchForm").find("input[type=text], select, textarea").val("");
+      $("#searchForm").find("input[type=radio], input[type=checkbox] ").prop("checked", false);
+    }
+
+    function fnChkByte(obj, maxByte) {
+      var str = obj.value;
+      var str_len = str.length;
+
+      var rbyte = 0;
+      var rlen = 0;
+      var one_char = "";
+      var str2 = "";
+
+      for (var i = 0; i < str_len; i++) {
+          one_char = str.charAt(i);
+          if (escape(one_char).length > 4) {
+              rbyte += 2; //한글2Byte
+          } else {
+              rbyte++; //영문 등 나머지 1Byte
+          }
+          if (rbyte <= maxByte) {
+              rlen = i + 1; //return할 문자열 갯수
+          }
+      }
+
+      $("#curByte").text(rbyte);
+
+      if (rbyte > maxByte) {
+          // alert("한글 "+(maxByte/2)+"자 / 영문 "+maxByte+"자를 초과 입력할 수 없습니다.");
+          alert("메세지는 최대 " + maxByte + "byte를 초과할 수 없습니다.");
+          str2 = str.substr(0, rlen); //문자열 자르기
+          obj.value = str2;
+          fnChkByte(obj, maxByte);
+      } else {
+          return false;
+      }
+   }
+
+  </script>
+</th:block>
+
+</body>
+</html>
+

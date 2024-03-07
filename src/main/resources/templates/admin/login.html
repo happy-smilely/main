@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy-Report-Only" content="upgrade-insecure-requests">
+    <title>Coin Chart</title>
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/static/adminlte/plugins/fontawesome-free/css/all.min.css">
+    <!-- icheck bootstrap -->
+    <link rel="stylesheet" href="/static/adminlte/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="/static/adminlte/css/adminlte.min.css">
+    <!-- jQuery -->
+    <script src="/static/adminlte/plugins/jquery/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="/static/adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="/static/adminlte/js/adminlte.min.js"></script>
+    <!-- cookie.js -->
+    <!-- ajax.js -->
+    <!--    <script src="/static/js/jquery.ajax-cross-origin.min.js"></script>-->
+    <!--<script src="/static/js/ajax.js"></script>-->
+
+</head>
+
+<body class="hold-transition login-page">
+
+<div class="login-box">
+    <div class="login-logo">
+        <b>Coin Chart</b> LOGIN
+    </div>
+    <!-- /.login-logo -->
+    <div class="card">
+        <div class="card-body login-card-body">
+            <div class="input-group mb-3">
+                <input type="text" id="admin_id" class="form-control" placeholder="아이디" value="">
+                <div class="input-group-append">
+                    <div class="input-group-text">
+                        <span class="fas fa-lock"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <input type="password" id="admin_pw" class="form-control" placeholder="비밀번호" value="">
+                <div class="input-group-append">
+                    <div class="input-group-text">
+                        <span class="fas fa-lock"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <!-- /.col -->
+                <div class="col-4">
+                    <button id="signin" class="btn btn-primary btn-block">Sign In</button>
+                </div>
+                <!-- /.col -->
+            </div>
+        </div>
+        <!-- /.login-card-body -->
+    </div>
+</div>
+<!-- /.login-box -->
+<script>
+    $(document).ready(() => {
+
+        $('input').keydown((event) => {
+            if (event.keyCode === 13){
+                adminLogin();
+            }
+        })
+        $("#signin").click(()=>{
+            adminLogin();
+        })
+    })
+
+    function adminLogin () {
+        if ($.trim($("#admin_id").val()) === '') {
+            alert('아이디를 확인해주세요.');
+            return;
+        }
+
+        if ($.trim($("#admin_pw").val()) === '') {
+            alert('비밀번호를 확인해주세요.');
+            return;
+        }
+        let form_data = {}
+        form_data.adminId = $("#admin_id").val()
+        form_data.adminPw = $("#admin_pw").val()
+        $.ajax({
+            url: "/admin/login/proc",
+            method: 'post',
+            data: JSON.stringify(form_data),
+            contentType:"application/json",
+            type: 'json',
+            success: function(data,status,xhr){
+                if(data.code === 200){
+                    location.replace("/admin");
+                }else{
+                    alert("로그인 실패!")
+                }
+            },
+            error: function(err){},
+            beforeSend:function(xhr){},
+            complete:function(){}
+        });
+    }
+</script>
+</body>
+</html>
+
+
+
