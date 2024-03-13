@@ -1,6 +1,7 @@
 package com.happy.smilely.main_project.config;
 
 import org.apache.catalina.connector.Connector;
+import org.apache.coyote.ajp.AbstractAjpProtocol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
@@ -26,11 +27,14 @@ public class ContainerConfig {
     }
 
     private Connector createAjpConnector() {
+        TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory();
         Connector ajpConnector = new Connector(ajpProtocol);
         ajpConnector.setPort(ajpPort);
         ajpConnector.setSecure(false);
         ajpConnector.setAllowTrace(false);
         ajpConnector.setScheme("http");
+        ((AbstractAjpProtocol) ajpConnector.getProtocolHandler()).setSecretRequired(false);
+        tomcat.addAdditionalTomcatConnectors(ajpConnector);
         return ajpConnector;
     }
 }
